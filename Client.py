@@ -5,6 +5,7 @@ from tkinter import messagebox
 from customtkinter import *
 import logging
 import time
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -23,6 +24,9 @@ class ChatClient:
         self.root = CTk()
         self.active_status = tk.StringVar(value="Connected")
 
+        self.professional_font = ("Arial", 12)
+        self.professional_bold_font = ("Arial", 12, "bold")
+
         self.login_window()
 
     def login_window(self):
@@ -32,22 +36,24 @@ class ChatClient:
         self.frame = CTkFrame(self.root)
         self.frame.pack(pady=20, padx=60, fill="both", expand=True)
 
-        self.label = CTkLabel(self.frame, text="Login")
+        self.label = CTkLabel(self.frame, text="Login", font=self.professional_font)
         self.label.pack(pady=12, padx=10)
 
-        self.entry_username = CTkEntry(self.frame, placeholder_text="Username")
+        self.entry_username = CTkEntry(self.frame, placeholder_text="Username", font=self.professional_font)
         self.entry_username.pack(pady=12, padx=10)
+        self.entry_username.bind("<Return>", self.focus_password)
 
-        self.entry_password = CTkEntry(self.frame, placeholder_text="Password", show="*")
+        self.entry_password = CTkEntry(self.frame, placeholder_text="Password", show="*", font=self.professional_font)
         self.entry_password.pack(pady=12, padx=10)
+        self.entry_password.bind("<Return>", self.submit_login)
 
-        self.show_password_var = CTkCheckBox(self.frame, text="Show Password", command=self.toggle_password)
+        self.show_password_var = CTkCheckBox(self.frame, text="Show Password", command=self.toggle_password, font=self.professional_font)
         self.show_password_var.pack(pady=12, padx=10)
 
-        self.button_login = CTkButton(self.frame, text="Login", command=self.login)
+        self.button_login = CTkButton(self.frame, text="Login", command=self.login, font=self.professional_font)
         self.button_login.pack(pady=12, padx=10)
 
-        self.button_signup = CTkButton(self.frame, text="Sign Up", command=self.signup_window)
+        self.button_signup = CTkButton(self.frame, text="Sign Up", command=self.signup_window, font=self.professional_font)
         self.button_signup.pack(pady=12, padx=10)
 
         self.message_label = CTkLabel(self.frame, text="", font=("Arial", 14))
@@ -60,26 +66,37 @@ class ChatClient:
         self.frame = CTkFrame(self.root)
         self.frame.pack(pady=20, padx=60, fill="both", expand=True)
 
-        self.label = CTkLabel(self.frame, text="Sign Up")
+        self.label = CTkLabel(self.frame, text="Sign Up", font=self.professional_font)
         self.label.pack(pady=12, padx=10)
 
-        self.entry_username = CTkEntry(self.frame, placeholder_text="Username")
+        self.entry_username = CTkEntry(self.frame, placeholder_text="Username", font=self.professional_font)
         self.entry_username.pack(pady=12, padx=10)
+        self.entry_username.bind("<Return>", self.focus_password)
 
-        self.entry_password = CTkEntry(self.frame, placeholder_text="Password", show="*")
+        self.entry_password = CTkEntry(self.frame, placeholder_text="Password", show="*", font=self.professional_font)
         self.entry_password.pack(pady=12, padx=10)
+        self.entry_password.bind("<Return>", self.submit_signup)
 
-        self.show_password_var = CTkCheckBox(self.frame, text="Show Password", command=self.toggle_password)
+        self.show_password_var = CTkCheckBox(self.frame, text="Show Password", command=self.toggle_password, font=self.professional_font)
         self.show_password_var.pack(pady=12, padx=10)
 
-        self.button_signup = CTkButton(self.frame, text="Sign Up", command=self.signup)
+        self.button_signup = CTkButton(self.frame, text="Sign Up", command=self.signup, font=self.professional_font)
         self.button_signup.pack(pady=12, padx=10)
 
-        self.button_back = CTkButton(self.frame, text="Back to Login", command=self.back_to_login)
+        self.button_back = CTkButton(self.frame, text="Back to Login", command=self.back_to_login, font=self.professional_font)
         self.button_back.pack(pady=12, padx=10)
 
         self.message_label = CTkLabel(self.frame, text="", font=("Arial", 14))
         self.message_label.pack(pady=12, padx=10)
+
+    def focus_password(self, event):
+        self.entry_password.focus_set()
+
+    def submit_login(self, event):
+        self.login()
+
+    def submit_signup(self, event):
+        self.signup()
 
     def back_to_login(self):
         self.frame.destroy()
@@ -157,55 +174,55 @@ class ChatClient:
         self.chat_frame.pack(pady=20, padx=20, fill="both", expand=True)
         self.chat_frame.grid_columnconfigure(0, weight=1)
 
-        self.entry_message = CTkEntry(self.tab_chat, placeholder_text=r"Type your message here... '\SERVER' to communicate with the server ")
+        self.entry_message = CTkEntry(self.tab_chat, placeholder_text=r"Type your message here... '\SERVER' to communicate with the server ", font=self.professional_font)
         self.entry_message.pack(pady=12, padx=10, side="left", fill="x", expand=True)
 
-        self.button_send = CTkButton(self.tab_chat, text="Send", command=self.send_message)
+        self.button_send = CTkButton(self.tab_chat, text="Send", command=self.send_message, font=self.professional_font)
         self.button_send.pack(pady=12, padx=10, side="right")
 
         self.settings_frame = CTkScrollableFrame(self.tab_settings)
         self.settings_frame.pack(pady=12, padx=10, fill="both", expand=True)
         self.settings_frame.grid_columnconfigure(0, weight=1)
 
-        self.server_info_label = CTkLabel(self.settings_frame, text=f"Connected to: {self.host}     :{self.port}")
+        self.server_info_label = CTkLabel(self.settings_frame, text=f"Connected to: {self.host}     :{self.port}", font=self.professional_font)
         self.server_info_label.pack(anchor="w")
 
-        self.user_count_label = CTkLabel(self.settings_frame, text="Connected users: N/A")
+        self.user_count_label = CTkLabel(self.settings_frame, text="Connected users: N/A", font=self.professional_font)
         self.user_count_label.pack(anchor="w")
 
         # Active status
-        self.active_status_label = CTkLabel(self.settings_frame, text= f"Active status: {self.active_status.get()}")
+        self.active_status_label = CTkLabel(self.settings_frame, text=f"Active status: {self.active_status.get()}", font=self.professional_font)
         self.active_status_label.pack(anchor="w")
 
-        self.online_duration_label = CTkLabel(self.settings_frame, text="Online duration: N/A")
+        self.online_duration_label = CTkLabel(self.settings_frame, text="Online duration: N/A", font=self.professional_font)
         self.online_duration_label.pack(anchor="w")
 
-        self.reconnect_button = CTkButton(self.settings_frame, text="Reconnect", command=self.reconnect)
+        self.reconnect_button = CTkButton(self.settings_frame, text="Reconnect", command=self.reconnect, font=self.professional_font)
         self.reconnect_button.pack(pady=12, padx=10)
 
-        self.appearance_mode_label = CTkLabel(self.settings_frame, text="Appearance Mode")
+        self.appearance_mode_label = CTkLabel(self.settings_frame, text="Appearance Mode", font=self.professional_font)
         self.appearance_mode_label.pack(pady=12, padx=10)
 
-        self.appearance_mode_optionmenu = CTkOptionMenu(self.settings_frame, values=["Dark", "Light", "System"], command=self.change_appearance_mode)
+        self.appearance_mode_optionmenu = CTkOptionMenu(self.settings_frame, values=["Dark", "Light", "System"], command=self.change_appearance_mode, font=self.professional_font)
         self.appearance_mode_optionmenu.pack(pady=12, padx=10)
 
-        self.scaling_label = CTkLabel(self.settings_frame, text="Scaling")
+        self.scaling_label = CTkLabel(self.settings_frame, text="Scaling", font=self.professional_font)
         self.scaling_label.pack(pady=12, padx=10)
 
-        self.scaling_optionmenu = CTkOptionMenu(self.settings_frame, values=["80%", "90%", "100%", "110%", "120%"], command=self.change_scaling)
+        self.scaling_optionmenu = CTkOptionMenu(self.settings_frame, values=["80%", "90%", "100%", "110%", "120%"], command=self.change_scaling, font=self.professional_font)
         self.scaling_optionmenu.pack(pady=12, padx=10)
 
-        self.theme_label = CTkLabel(self.settings_frame, text="Theme")
+        self.theme_label = CTkLabel(self.settings_frame, text="Theme", font=self.professional_font)
         self.theme_label.pack(pady=12, padx=10)
 
-        self.theme_optionmenu = CTkOptionMenu(self.settings_frame, values=["blue", "green", "dark-blue"], command=self.change_theme)
+        self.theme_optionmenu = CTkOptionMenu(self.settings_frame, values=["blue", "green", "dark-blue"], command=self.change_theme, font=self.professional_font)
         self.theme_optionmenu.pack(pady=12, padx=10)
 
-        self.enter_key_behavior_label = CTkLabel(self.settings_frame, text="Enter Key Behavior")
+        self.enter_key_behavior_label = CTkLabel(self.settings_frame, text="Enter Key Behavior", font=self.professional_font)
         self.enter_key_behavior_label.pack(pady=12, padx=10)
 
         self.enter_key_behavior = tk.StringVar(value="Normal")
-        self.enter_key_optionmenu = CTkOptionMenu(self.settings_frame, values=["Normal", "Send Message"], command=self.change_enter_key_behavior)
+        self.enter_key_optionmenu = CTkOptionMenu(self.settings_frame, values=["Normal", "Send Message"], command=self.change_enter_key_behavior, font=self.professional_font)
         self.enter_key_optionmenu.pack(pady=12, padx=10)
 
         self.entry_message.bind('<Return>', self.on_enter_key)
@@ -263,20 +280,19 @@ class ChatClient:
             fg_color=bg_color,
             text_color=text_color,
             wraplength=500,
+            font=self.professional_bold_font
         )
         bubble.pack(fill='both', padx=10, pady=10)
 
     def send_message(self):
-        message = self.entry_message.get().strip()
-        if message:
+        if message := self.entry_message.get().strip():
             try:
-                if message.startswith(r"\SERVER") or message.startswith(r"\server"):
+                if re.match(r"^\\SERVER\s|\\server\s", message):
                     self.client_socket.send(message.encode())
-                    self.create_chat_bubble(message.strip(), "self")
                 else:
                     full_message = f'USER_MESSAGE {self.client_username}: \n{message}'
                     self.client_socket.send(full_message.encode())
-                    self.create_chat_bubble(message.strip(), "self")
+                self.create_chat_bubble(message, "self")
                 self.entry_message.delete(0, tk.END)
             except Exception as e:
                 logging.error(f"Send message error: {e}")
@@ -292,10 +308,10 @@ class ChatClient:
                 if message.startswith("USER_COUNT"):
                     user_count = message.split()[1]
                     self.user_count_label.configure(text=f"Connected users: {user_count}")
-                elif message.startswith('SERVER: '):
-                        self.create_chat_bubble(message, "server")
-                elif message.startswith('USER_MESSAGE'):
-                    message = message.replace('USER_MESSAGE', '').strip()
+                elif re.match(r'^SERVER:\s', message):
+                    self.create_chat_bubble(message, "other")
+                elif re.match(r'^USER_MESSAGE', message):
+                    message = re.sub(r'^USER_MESSAGE', '', message).strip()
                     if not message.startswith(self.client_username):
                         self.create_chat_bubble(message, "other")
                 else:
@@ -313,7 +329,7 @@ class ChatClient:
                 elapsed_time = int(time.time() - self.connection_time)
                 hours, minutes = divmod(elapsed_time // 60, 60)
                 seconds = elapsed_time % 60
-                self.online_duration_label.configure(text=f"Online duration: {hours}h {minutes}m {seconds}s")
+                self.online_duration_label.configure(text=f"Active duration: {hours}h {minutes}m {seconds}s")
                 self.active_status_label.configure(text=f"Active status: {self.active_status.get()}")
             else:
                 self.active_status_label.configure(text="Active status: Disconnected")

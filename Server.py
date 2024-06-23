@@ -4,6 +4,7 @@ import threading
 import sqlite3 
 import requests
 import time
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -69,16 +70,15 @@ class ChatServer:
         logging.info(f"New connection from {client_address}")
         try:
             while True:
-                message = client_socket.recv(1024).decode()
-                if message:
+                if message := client_socket.recv(1024).decode():
                     logging.debug(f"Received message: {message}")
 
-                    if message.startswith("LOGIN"):
+                    if re.match(r"^LOGIN\s", message):
                         self.handle_login(client_socket, message)
-                    elif message.startswith("SIGNUP"):
+                    elif re.match(r"^SIGNUP\s", message):
                         self.handle_signup(client_socket, message)
-                    elif message.startswith(r"\SERVER") or message.startswith(r"\server"):
-                        user_message = message.replace(r"\SERVER",'').replace(r"\server",'').strip()
+                    elif re.match(r"^\\SERVER\s|\\server\s", message):
+                        user_message = re.sub(r"^\\SERVER\s|\\server\s", '', message).strip()
                         try:
                             chatbot_response = self.get_chatbot_response(user_message)
                             client_socket.send(f'SERVER: \n{chatbot_response}'.encode())
@@ -150,8 +150,7 @@ class ChatServer:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute("SELECT username, password FROM users WHERE username=?", (username,))
-                record = cursor.fetchone()
-                if record:
+                if record := cursor.fetchone():
                     db_username, db_password = record
                     if db_password == password:
                         client_socket.send("SUCCESS".encode())
