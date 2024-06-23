@@ -3,6 +3,7 @@ import socket
 import threading
 import sqlite3 
 import requests
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -131,6 +132,17 @@ class ChatServer:
             logging.error(f"Chatbot error: {e}")
             return "Failed to retrieve data from the chatbot."
 
+    def broadcast_user_count(self):
+        while True:
+            user_count = len(self.clients)
+            message = f"USER_COUNT {user_count}"
+            for client_socket in self.clients.values():
+                try:
+                    client_socket.send(message.encode())
+                except Exception as e:
+                    logging.error(f"Failed to send user count: {e}")
+            time.sleep(5)  # Send user count every 5 seconds
+
 
     def handle_login(self, client_socket, message):
         try:
@@ -187,6 +199,7 @@ class ChatServer:
         client_socket.close()
 
     def start(self):
+        threading.Thread(target=self.broadcast_user_count, daemon=True).start()
         while True:
             try:
                 client_socket, client_address = self.server.accept()
