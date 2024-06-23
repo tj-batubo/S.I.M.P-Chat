@@ -20,10 +20,12 @@ class ChatClient:
         self.connection_time = None
         self.online_duration_thread = None
 
+        self.root = CTk()
+        self.active_status = tk.StringVar(value="Connected")
+
         self.login_window()
 
     def login_window(self):
-        self.root = CTk()
         self.root.geometry("400x400")
         self.root.title("S.I.M.P Login")
 
@@ -161,39 +163,52 @@ class ChatClient:
         self.button_send = CTkButton(self.tab_chat, text="Send", command=self.send_message)
         self.button_send.pack(pady=12, padx=10, side="right")
 
-        self.info_frame = CTkFrame(self.tab_settings)
-        self.info_frame.pack(pady=12, padx=10, fill="x")
+        self.settings_frame = CTkScrollableFrame(self.tab_settings)
+        self.settings_frame.pack(pady=12, padx=10, fill="both", expand=True)
+        self.settings_frame.grid_columnconfigure(0, weight=1)
 
-        self.server_info_label = CTkLabel(self.info_frame, text=f"Connected to: {self.host}:{self.port}")
+        self.server_info_label = CTkLabel(self.settings_frame, text=f"Connected to: {self.host}     :{self.port}")
         self.server_info_label.pack(anchor="w")
 
-        self.user_count_label = CTkLabel(self.info_frame, text="Connected users: N/A")
+        self.user_count_label = CTkLabel(self.settings_frame, text="Connected users: N/A")
         self.user_count_label.pack(anchor="w")
 
-        self.connection_time_label = CTkLabel(self.info_frame, text="Connection time: N/A")
-        self.connection_time_label.pack(anchor="w")
-
-        self.online_duration_label = CTkLabel(self.info_frame, text="Online duration: N/A")
-        self.online_duration_label.pack(anchor="w")
-
-        self.active_status_label = CTkLabel(self.info_frame, text="Active status: Disconnected")
+        # Active status
+        self.active_status_label = CTkLabel(self.settings_frame, text= f"Active status: {self.active_status.get()}")
         self.active_status_label.pack(anchor="w")
 
-        self.appearance_mode_optionmenu = CTkOptionMenu(self.tab_settings, values=["Dark", "Light", "System"], command=self.change_appearance_mode)
+        self.online_duration_label = CTkLabel(self.settings_frame, text="Online duration: N/A")
+        self.online_duration_label.pack(anchor="w")
+
+        self.reconnect_button = CTkButton(self.settings_frame, text="Reconnect", command=self.reconnect)
+        self.reconnect_button.pack(pady=12, padx=10)
+
+        self.appearance_mode_label = CTkLabel(self.settings_frame, text="Appearance Mode")
+        self.appearance_mode_label.pack(pady=12, padx=10)
+
+        self.appearance_mode_optionmenu = CTkOptionMenu(self.settings_frame, values=["Dark", "Light", "System"], command=self.change_appearance_mode)
         self.appearance_mode_optionmenu.pack(pady=12, padx=10)
 
-        self.scaling_optionmenu = CTkOptionMenu(self.tab_settings, values=["80%", "90%", "100%", "110%", "120%"], command=self.change_scaling)
+        self.scaling_label = CTkLabel(self.settings_frame, text="Scaling")
+        self.scaling_label.pack(pady=12, padx=10)
+
+        self.scaling_optionmenu = CTkOptionMenu(self.settings_frame, values=["80%", "90%", "100%", "110%", "120%"], command=self.change_scaling)
         self.scaling_optionmenu.pack(pady=12, padx=10)
 
-        self.theme_optionmenu = CTkOptionMenu(self.tab_settings, values=["blue", "green", "dark-blue"], command=self.change_theme)
+        self.theme_label = CTkLabel(self.settings_frame, text="Theme")
+        self.theme_label.pack(pady=12, padx=10)
+
+        self.theme_optionmenu = CTkOptionMenu(self.settings_frame, values=["blue", "green", "dark-blue"], command=self.change_theme)
         self.theme_optionmenu.pack(pady=12, padx=10)
 
+        self.enter_key_behavior_label = CTkLabel(self.settings_frame, text="Enter Key Behavior")
+        self.enter_key_behavior_label.pack(pady=12, padx=10)
+
         self.enter_key_behavior = tk.StringVar(value="Normal")
-        self.enter_key_optionmenu = CTkOptionMenu(self.tab_settings, values=["Normal", "Send Message"], command=self.change_enter_key_behavior)
+        self.enter_key_optionmenu = CTkOptionMenu(self.settings_frame, values=["Normal", "Send Message"], command=self.change_enter_key_behavior)
         self.enter_key_optionmenu.pack(pady=12, padx=10)
 
         self.entry_message.bind('<Return>', self.on_enter_key)
-        self.entry_message.bind('<Shift-Return>', self.on_shift_enter_key)
 
         self.online_duration_thread = threading.Thread(target=self.update_info_bar, daemon=True)
         self.online_duration_thread.start()
@@ -209,10 +224,6 @@ class ChatClient:
         if self.enter_key_behavior.get() == "Send Message":
             self.send_message()
             return "break"
-
-    def on_shift_enter_key(self, event):
-        self.entry_message.insert(tk.INSERT, '\n')
-        return "break"
 
     def change_theme(self, theme):
         set_default_color_theme(theme)
@@ -263,12 +274,14 @@ class ChatClient:
                     self.client_socket.send(message.encode())
                     self.create_chat_bubble(message.strip(), "self")
                 else:
-                    full_message = f'{self.client_username}: \n"{message}"'
+                    full_message = f'USER_MESSAGE {self.client_username}: \n{message}'
                     self.client_socket.send(full_message.encode())
-                    self.create_chat_bubble(message.strip('"'), "self")
+                    self.create_chat_bubble(message.strip(), "self")
                 self.entry_message.delete(0, tk.END)
             except Exception as e:
                 logging.error(f"Send message error: {e}")
+                if self.active_status.get() == "Disconnected":
+                    messagebox.showerror("Error", "You are disconnected from the server.")
         else:
             messagebox.showwarning("Warning", "You cannot send an empty message!")
 
@@ -279,15 +292,19 @@ class ChatClient:
                 if message.startswith("USER_COUNT"):
                     user_count = message.split()[1]
                     self.user_count_label.configure(text=f"Connected users: {user_count}")
-                elif not message.startswith(f'{self.client_username}: '):
-                    if message.startswith('server: '):
-                        self.create_chat_bubble(message.replace('server: ', ''), "server")
-                    else:
+                elif message.startswith('SERVER: '):
+                        self.create_chat_bubble(message, "server")
+                elif message.startswith('USER_MESSAGE'):
+                    message = message.replace('USER_MESSAGE', '').strip()
+                    if not message.startswith(self.client_username):
                         self.create_chat_bubble(message, "other")
+                else:
+                    self.create_chat_bubble(message, "other")
             except ConnectionAbortedError:
                 break
             except Exception as e:
                 logging.error(f"Receive error: {e}")
+                self.active_status.set("Disconnected")
                 break
 
     def update_info_bar(self):
@@ -297,10 +314,29 @@ class ChatClient:
                 hours, minutes = divmod(elapsed_time // 60, 60)
                 seconds = elapsed_time % 60
                 self.online_duration_label.configure(text=f"Online duration: {hours}h {minutes}m {seconds}s")
-                self.active_status_label.configure(text="Active status: Connected")
+                self.active_status_label.configure(text=f"Active status: {self.active_status.get()}")
             else:
                 self.active_status_label.configure(text="Active status: Disconnected")
             time.sleep(1)
+
+    def reconnect(self):
+        attempts = 5
+        for attempt in range(attempts):
+            try:
+                self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.client_socket.connect((self.host, self.port))
+                self.connection_time = time.time()
+                self.active_status.set("Connected")
+                messagebox.showinfo("Success", "Reconnected to the server.")
+                
+                # Start listening for messages again after reconnecting
+                threading.Thread(target=self.receive_messages, daemon=True).start()
+                return
+            except Exception as e:
+                logging.error(f"Reconnect attempt {attempt + 1} failed: {e}")
+                time.sleep(1)
+        messagebox.showerror("Error", "Failed to reconnect to the server.")
+        self._reset_socket()
 
     def _reset_socket(self):
         self.client_socket.close()
