@@ -127,10 +127,14 @@ class ChatServer:
             )
 
             response = chat_session.send_message(message)
-            return response.text
+            cleaned_response = self.clean_response(response.text)  # Clean the response here
+            return cleaned_response
         except Exception as e:
             logging.error(f"Chatbot error: {e}")
             return "Failed to retrieve data from the chatbot."
+
+    def clean_response(self, response):
+        return re.sub(r'\*', '', response)
 
     def broadcast_user_count(self):
         while True:
@@ -156,7 +160,7 @@ class ChatServer:
                         client_socket.send("SUCCESS".encode())
                         self.clients[username] = client_socket
                         logging.info(f"{username} logged in successfully.")
-                        self.broadcast(f"{username} has joined the server.")
+                        self.broadcast(f"SERVER: \n{username} has joined the server.")
                     else:
                         client_socket.send("FAIL".encode())
                 else:
@@ -193,7 +197,7 @@ class ChatServer:
             if socket == client_socket:
                 del self.clients[username]
                 logging.info(f"{username} has left the server.")
-                self.broadcast(f"{username} has left the server.")
+                self.broadcast(f"SERVER: \n{username} has left the server.")
                 break
         client_socket.close()
 

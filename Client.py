@@ -251,38 +251,53 @@ class ChatClient:
     def change_scaling(self, scaling):
         set_widget_scaling(int(scaling.replace("%", "")) / 100)
 
-    def create_chat_bubble(self, message, sender_type):
-        message_with_sender = message.strip()
+    def create_chat_bubble(self, username, message, sender_type):
+        # Transparent frame for the entire message block
+        message_frame = CTkFrame(self.chat_frame, fg_color="transparent", width=600)
+        message_frame.grid(sticky='w' if sender_type != "self" else 'e', padx=5, pady=5)
 
+        if sender_type != "self":
+            # Username label for received messages
+            username_label = CTkLabel(
+                message_frame,
+                text=username,
+                justify="left",
+                text_color="#000000",
+                wraplength=500,
+                font=self.professional_bold_font
+            )
+            username_label.pack(anchor='w', padx=10, pady=(10, 0))
+
+        
+        # Message bubble
         if sender_type == "self":
             bg_color = "#0078D7"
-            brd_color = bg_color
             text_color = "#FFFFFF"
             sticky_side = 'e'
         elif sender_type == "server":
             bg_color = "#FFFFFF"
-            brd_color = "#F2F2F2"
             text_color = "#000000"
             sticky_side = 'w'
         else:
             bg_color = "#F2F2F2"
-            brd_color = bg_color
             text_color = "#000000"
             sticky_side = 'w'
 
-        bubble_frame = CTkFrame(self.chat_frame, corner_radius=15, fg_color=brd_color, width=600)
-        bubble_frame.grid(sticky=sticky_side, padx=5, pady=5)
+        brd_color = bg_color
+        bubble_frame = CTkFrame(message_frame, corner_radius=15, fg_color=brd_color, width=600)
+        bubble_frame.pack(fill='both', padx=10, pady=(0, 10))
 
         bubble = CTkLabel(
             bubble_frame,
-            text=message_with_sender.strip('"'),
+            text=message.strip('"'),
             justify="left",
             fg_color=bg_color,
             text_color=text_color,
             wraplength=500,
-            font=self.professional_bold_font
+            font=self.professional_font
         )
         bubble.pack(fill='both', padx=10, pady=10)
+
 
     def send_message(self):
         if message := self.entry_message.get().strip():
@@ -292,7 +307,7 @@ class ChatClient:
                 else:
                     full_message = f'USER_MESSAGE {self.client_username}: \n{message}'
                     self.client_socket.send(full_message.encode())
-                self.create_chat_bubble(message, "self")
+                self.create_chat_bubble("You", message, "self")  # No username for sent messages
                 self.entry_message.delete(0, tk.END)
             except Exception as e:
                 logging.error(f"Send message error: {e}")
@@ -300,6 +315,7 @@ class ChatClient:
                     messagebox.showerror("Error", "You are disconnected from the server.")
         else:
             messagebox.showwarning("Warning", "You cannot send an empty message!")
+
 
     def receive_messages(self):
         while self.running:
@@ -309,19 +325,23 @@ class ChatClient:
                     user_count = message.split()[1]
                     self.user_count_label.configure(text=f"Connected users: {user_count}")
                 elif re.match(r'^SERVER:\s', message):
-                    self.create_chat_bubble(message, "other")
+                    message = re.sub(r"^SERVER:\s", '', message).strip()
+                    self.create_chat_bubble("Server", message, "server")
                 elif re.match(r'^USER_MESSAGE', message):
                     message = re.sub(r'^USER_MESSAGE', '', message).strip()
-                    if not message.startswith(self.client_username):
-                        self.create_chat_bubble(message, "other")
+                    username, message = message.split(': \n', 1)
+                    if username != self.client_username:
+                        self.create_chat_bubble(username, message, "other")
+                    # No need to display the message again here as it's already handled in send_message
                 else:
-                    self.create_chat_bubble(message, "other")
+                    self.create_chat_bubble("Unknown", message, "other")
             except ConnectionAbortedError:
                 break
             except Exception as e:
                 logging.error(f"Receive error: {e}")
                 self.active_status.set("Disconnected")
                 break
+
 
     def update_info_bar(self):
         while self.running:
