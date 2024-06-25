@@ -136,8 +136,13 @@ class ChatClient:
     def signup(self):
         username = self.entry_username.get().lower().strip()
         password = self.entry_password.get().strip()
+
         if username and password:
             try:
+                if ' ' in username or ' ' in password:
+                    self.message_label.configure(text="Username and Password must be one word.")
+                    self._reset_socket()
+                    return
                 self.client_socket.connect((self.host, self.port))
                 self.client_socket.send(f"SIGNUP {username} {password}".encode())
                 response = self.client_socket.recv(1024).decode()
@@ -148,6 +153,9 @@ class ChatClient:
                     self.back_to_login()
                 elif response == "USERNAME_EXISTS":
                     self.message_label.configure(text="Username already exists")
+                    self._reset_socket()
+                elif response == "INVALID_INPUT":
+                    self.message_label.configure(text="Username and Password must be one word.")
                     self._reset_socket()
             except Exception as e:
                 self.message_label.configure(text="Connection error: Unable to communicate with server")
@@ -243,7 +251,9 @@ class ChatClient:
             return "break"
 
     def change_theme(self, theme):
-        set_default_color_theme(theme)
+        set_appearance_mode(theme)
+        self.chat_window.update_idletasks()
+
 
     def change_appearance_mode(self, mode):
         set_appearance_mode(mode)

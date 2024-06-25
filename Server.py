@@ -5,13 +5,15 @@ import sqlite3
 import requests
 import time
 import re
+import os
+import google.generativeai as genai
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Database setup function
 def create_database():
-    database_path = r"C:\Users\tjbat\Documents\python projects\S.I.M.P\S.I.M.P (Beta)\S.I.M.P.db"
+    database_path = r"C:\Users\tjbat\Documents\python projects\S.I.M.P\S.I.M.P (Beta)\main\S.I.M.P-Chat\S.I.M.P.db"
     try:
         conn = sqlite3.connect(database_path)
         cursor = conn.cursor()
@@ -98,9 +100,6 @@ class ChatServer:
             self.remove_client(client_socket)
 
     def get_chatbot_response(self, message):
-        import os
-        import google.generativeai as genai
-
         try:
             # Set the environment variable for the API key
             os.environ["GEMINI_API_KEY"] = "AIzaSyBFUyEqWF4MCCToqZpQcWP4XT77Mo6LkHI"
@@ -213,7 +212,7 @@ class ChatServer:
 
 if __name__ == "__main__":
     try:
-        server = ChatServer(host='192.168.43.250', port=5555, db_path=r"C:\Users\tjbat\Documents\python projects\S.I.M.P\S.I.M.P (Beta)\S.I.M.P.db")
+        server = ChatServer(host='192.168.43.250', port=5555, db_path=r"C:\Users\tjbat\Documents\python projects\S.I.M.P\S.I.M.P (Beta)\main\S.I.M.P-Chat\S.I.M.P.db")
         server.start()
     except Exception as e:
         logging.critical(f"Server startup failed: {e}")
